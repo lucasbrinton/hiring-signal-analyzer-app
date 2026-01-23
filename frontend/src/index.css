@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles */
+body {
+  @apply bg-gray-50 text-gray-900 antialiased;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 rounded;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded hover:bg-gray-400;
+}
+
+/* Focus styles */
+*:focus-visible {
+  @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+}
+
+/* Textarea resize handle */
+textarea {
+  resize: vertical;
+}
+
+/* File input styling */
+input[type="file"] {
+  @apply cursor-pointer;
+}
+
+input[type="file"]::file-selector-button {
+  @apply mr-4 py-2 px-4 rounded-lg border-0 text-sm font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 cursor-pointer transition-colors;
+}
