@@ -1,2 +1,3 @@
-export { useAnalysis } from './useAnalysis';
-export { useResumeInput } from './useResumeInput';
+export { useAnalysis } from "./useAnalysis";
+export { useDarkMode } from "./useDarkMode";
+export { useResumeInput } from "./useResumeInput";

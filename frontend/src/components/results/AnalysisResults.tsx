@@ -1,60 +1,120 @@
-import React from 'react';
-import type { AnalysisResult } from '@shared/types';
-import { ScoreGauge } from './ScoreGauge';
-import { ScoreBreakdown } from './ScoreBreakdown';
-import { InsightSection } from './InsightSection';
-import { CopyableResults } from './CopyableResults';
-import { Disclaimer } from './Disclaimer';
+/**
+ * @fileoverview Analysis Results Container
+ *
+ * Main display component for showing the complete analysis output.
+ * Orchestrates the layout of:
+ * - Score gauge (visual match percentage)
+ * - Summary accordion
+ * - Insight sections (strengths, gaps, improvements, risks)
+ * - Copy and download actions
+ *
+ * Layout:
+ * - Desktop: Score gauge left, header/summary right
+ * - Mobile: Score gauge centered above header
+ */
 
+import type { AnalysisResult } from "@shared/types";
+import React from "react";
+import { Accordion, Toast, useToast } from "../ui";
+import { CopyableResults } from "./CopyableResults";
+import { Disclaimer } from "./Disclaimer";
+import { DownloadPDF } from "./DownloadPDF";
+import { InsightSection } from "./InsightSection";
+import { ScoreGauge } from "./ScoreGauge";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TYPE DEFINITIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Props for the AnalysisResults component */
 interface AnalysisResultsProps {
+  /** The complete analysis result from the API */
   result: AnalysisResult;
+  /** Optional processing time for performance display */
   processingTimeMs?: number | null;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
 
 export const AnalysisResults: React.FC<AnalysisResultsProps> = ({
   result,
   processingTimeMs,
 }) => {
+  const { toast, showToast, hideToast } = useToast();
+
+  const handleCopy = () => {
+    showToast("Results copied to clipboard", "success");
+  };
+
   return (
     <div className="space-y-6">
       {/* Header with score */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex flex-col lg:flex-row lg:items-start gap-6">
           {/* Score gauge */}
           <div className="flex justify-center lg:justify-start">
             <ScoreGauge score={result.matchScore} />
           </div>
 
-          {/* Summary and metadata */}
+          {/* Header and copy button */}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-4">
-              <h2 className="text-xl font-semibold text-gray-900">Analysis Complete</h2>
-              <CopyableResults result={result} />
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Analysis Complete
+              </h2>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <CopyableResults result={result} onCopy={handleCopy} />
+                <DownloadPDF result={result} />
+              </div>
             </div>
 
-            <p className="mt-3 text-gray-700 leading-relaxed">{result.summary}</p>
-
             {processingTimeMs && (
-              <p className="mt-4 text-xs text-gray-500">
+              <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
                 Analysis completed in {(processingTimeMs / 1000).toFixed(1)}s
               </p>
             )}
           </div>
         </div>
 
-        {/* Score interpretation */}
-        <div className="mt-6 pt-6 border-t border-gray-100">
-          <ScoreBreakdown score={result.matchScore} />
+        {/* Summary in collapsible accordion */}
+        <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
+          <Accordion
+            title="Summary"
+            defaultExpanded={true}
+            icon={
+              <svg
+                className="w-5 h-5 text-blue-600 dark:text-blue-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+            }
+            headerClassName="text-gray-700 dark:text-gray-300"
+          >
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              {result.summary}
+            </p>
+          </Accordion>
         </div>
       </div>
 
-      {/* Insight sections */}
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* Insight sections - reordered: Strengths > Gaps > Improvements > Risks */}
+      <div className="flex flex-col gap-6">
         <InsightSection
           type="strength"
           title="Strengths"
           items={result.strengths}
           emptyMessage="No specific strengths identified"
+          defaultExpanded={true}
         />
 
         <InsightSection
@@ -62,13 +122,7 @@ export const AnalysisResults: React.FC<AnalysisResultsProps> = ({
           title="Gaps"
           items={result.gaps}
           emptyMessage="No significant gaps identified"
-        />
-
-        <InsightSection
-          type="risk"
-          title="Risk Flags"
-          items={result.riskFlags}
-          emptyMessage="No risk flags identified"
+          defaultExpanded={true}
         />
 
         <InsightSection
@@ -76,11 +130,25 @@ export const AnalysisResults: React.FC<AnalysisResultsProps> = ({
           title="Improvements"
           items={result.improvements}
           emptyMessage="No specific improvements suggested"
+          defaultExpanded={true}
+        />
+
+        <InsightSection
+          type="risk"
+          title="Risk Flags"
+          items={result.riskFlags}
+          emptyMessage="No risk flags identified"
+          defaultExpanded={false}
         />
       </div>
 
       {/* Disclaimer */}
       <Disclaimer />
+
+      {/* Toast notifications */}
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
+      )}
     </div>
   );
 };

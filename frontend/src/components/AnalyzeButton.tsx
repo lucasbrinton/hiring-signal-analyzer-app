@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface AnalyzeButtonProps {
   onClick: () => void;
@@ -21,18 +21,14 @@ export const AnalyzeButton: React.FC<AnalyzeButtonProps> = ({
         flex items-center justify-center gap-2
         ${
           isDisabled || isLoading
-            ? 'bg-gray-300 cursor-not-allowed'
-            : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-sm hover:shadow'
+            ? "bg-gray-300 dark:bg-gray-600 cursor-not-allowed"
+            : "bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-sm hover:shadow"
         }
       `}
     >
       {isLoading ? (
         <>
-          <svg
-            className="animate-spin h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
+          <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
             <circle
               className="opacity-25"
               cx="12"

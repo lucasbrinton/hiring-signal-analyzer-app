@@ -1,72 +1,113 @@
+/**
+ * @fileoverview Express Server Entry Point - Hiring Signal Analyzer API
+ *
+ * This is the main entry point for the backend server. It configures:
+ * - Express middleware (CORS, body parsing, error handling)
+ * - API routes (/api/analyze for resume analysis)
+ * - Health check endpoint (/health for monitoring)
+ *
+ * Architecture Notes:
+ * - Uses environment variables via dotenv (loaded first for proper config)
+ * - Validates all required configuration before server starts
+ * - Implements centralized error handling via middleware
+ * - Stateless design - no session or database dependencies
+ *
+ * @see routes/analyze.ts for main API endpoint implementation
+ * @see services/claude.ts for AI integration details
+ */
+
 // Load environment variables FIRST (before any other imports)
-import 'dotenv/config';
+// This ensures config.ts has access to all env vars
+import "dotenv/config";
 
-import express from 'express';
-import cors from 'cors';
-import { config, validateConfig } from './config.js';
-import { errorHandler } from './middleware/error-handler.js';
-import analyzeRouter from './routes/analyze.js';
+import cors from "cors";
+import express from "express";
 
-// Validate configuration before starting
+import { config, validateConfig } from "./config.js";
+import { errorHandler } from "./middleware/error-handler.js";
+import analyzeRouter from "./routes/analyze.js";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFIGURATION VALIDATION
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Validate required configuration before starting server
+// Throws descriptive errors if API keys or ports are missing
 validateConfig();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EXPRESS APP INITIALIZATION
+// ─────────────────────────────────────────────────────────────────────────────
 
 const app = express();
 
-// ======================
-// MIDDLEWARE
-// ======================
+// ─────────────────────────────────────────────────────────────────────────────
+// MIDDLEWARE CONFIGURATION
+// ─────────────────────────────────────────────────────────────────────────────
 
-// CORS configuration
+/**
+ * CORS Configuration
+ * - Allows requests from configured frontend origin
+ * - Restricts to GET/POST methods (no PUT/DELETE needed)
+ * - Only accepts Content-Type header for JSON requests
+ */
 app.use(
   cors({
     origin: config.cors.origin,
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type'],
-  })
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+  }),
 );
 
-// Parse JSON bodies
-app.use(express.json({ limit: '1mb' }));
+/** JSON body parser with 1MB limit (sufficient for resume text) */
+app.use(express.json({ limit: "1mb" }));
 
-// Parse URL-encoded bodies (for form submissions)
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+/** URL-encoded parser for form submissions (PDF upload uses multipart) */
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
-// ======================
+// ─────────────────────────────────────────────────────────────────────────────
 // ROUTES
-// ======================
+// ─────────────────────────────────────────────────────────────────────────────
 
-// Health check endpoint
-app.get('/health', (_req, res) => {
+/**
+ * Health Check Endpoint
+ * Used for monitoring and load balancer health checks
+ */
+app.get("/health", (_req, res) => {
   res.json({
-    status: 'ok',
+    status: "ok",
     timestamp: new Date().toISOString(),
   });
 });
 
-// Main analyze endpoint
-app.use('/api/analyze', analyzeRouter);
+/**
+ * Analysis API Routes
+ * - POST /api/analyze - Analyze resume against job description
+ * - POST /api/analyze/pdf - Extract text from PDF (preview)
+ */
+app.use("/api/analyze", analyzeRouter);
 
-// ======================
+// ─────────────────────────────────────────────────────────────────────────────
 // ERROR HANDLING
-// ======================
+// ─────────────────────────────────────────────────────────────────────────────
 
-// 404 handler
+/** 404 handler for undefined routes */
 app.use((_req, res) => {
   res.status(404).json({
     success: false,
     error: {
-      code: 'NOT_FOUND',
-      message: 'Endpoint not found',
+      code: "NOT_FOUND",
+      message: "Endpoint not found",
     },
   });
 });
 
-// Global error handler
+/** Global error handler - catches all thrown errors and formats response */
 app.use(errorHandler);
 
-// ======================
-// START SERVER
-// ======================
+// ─────────────────────────────────────────────────────────────────────────────
+// SERVER STARTUP
+// ─────────────────────────────────────────────────────────────────────────────
 
 app.listen(config.port, () => {
   console.log(`

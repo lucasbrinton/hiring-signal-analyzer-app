@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 export const Disclaimer: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-100 transition-colors"
+        className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
       >
         <div className="flex items-center gap-2">
           <svg
-            className="w-4 h-4 text-gray-500"
+            className="w-4 h-4 text-gray-500 dark:text-gray-400"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -23,24 +23,31 @@ export const Disclaimer: React.FC = () => {
               d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          <span className="text-sm font-medium text-gray-700">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Important: How to interpret these results
           </span>
         </div>
         <svg
-          className={`w-4 h-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isExpanded ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
         </svg>
       </button>
 
       {isExpanded && (
-        <div className="px-4 pb-4 text-sm text-gray-600 space-y-3">
+        <div className="px-4 pb-4 text-sm text-gray-600 dark:text-gray-400 space-y-3">
           <div>
-            <h4 className="font-medium text-gray-800">What this analysis IS:</h4>
+            <h4 className="font-medium text-gray-800 dark:text-gray-200">
+              What this analysis IS:
+            </h4>
             <ul className="mt-1 ml-4 list-disc space-y-1">
               <li>An AI-generated assessment of keyword and skill alignment</li>
               <li>A tool for identifying potential gaps to address</li>
@@ -49,7 +56,9 @@ export const Disclaimer: React.FC = () => {
           </div>
 
           <div>
-            <h4 className="font-medium text-gray-800">What this analysis is NOT:</h4>
+            <h4 className="font-medium text-gray-800 dark:text-gray-200">
+              What this analysis is NOT:
+            </h4>
             <ul className="mt-1 ml-4 list-disc space-y-1">
               <li>A guarantee of interview or job offer outcomes</li>
               <li>A replacement for human recruiter evaluation</li>
@@ -59,31 +68,34 @@ export const Disclaimer: React.FC = () => {
           </div>
 
           <div>
-            <h4 className="font-medium text-gray-800">Special considerations:</h4>
+            <h4 className="font-medium text-gray-800 dark:text-gray-200">
+              Special considerations:
+            </h4>
             <ul className="mt-1 ml-4 list-disc space-y-1">
               <li>
-                <strong>Career changers:</strong> Scores may be lower due to different terminology,
-                even with transferable skills
+                <strong>Career changers:</strong> Scores may be lower due to
+                different terminology, even with transferable skills
               </li>
               <li>
-                <strong>Junior roles:</strong> Entry-level positions often value potential over
-                exact experience matches
+                <strong>Junior roles:</strong> Entry-level positions often value
+                potential over exact experience matches
               </li>
               <li>
-                <strong>Startup vs. Enterprise:</strong> Culture fit and adaptability may matter
-                more than keyword matches
+                <strong>Startup vs. Enterprise:</strong> Culture fit and
+                adaptability may matter more than keyword matches
               </li>
               <li>
-                <strong>Internal referrals:</strong> Many roles are filled through networks
-                regardless of resume-JD fit
+                <strong>Internal referrals:</strong> Many roles are filled
+                through networks regardless of resume-JD fit
               </li>
             </ul>
           </div>
 
-          <p className="pt-2 border-t border-gray-200 text-xs text-gray-500">
-            This tool is provided for informational purposes only. Results are generated by AI
-            and should not be considered professional career advice. Always use your own judgment
-            and consider consulting with career professionals for important decisions.
+          <p className="pt-2 border-t border-gray-200 dark:border-gray-600 text-xs text-gray-500 dark:text-gray-400">
+            This tool is provided for informational purposes only. Results are
+            generated by AI and should not be considered professional career
+            advice. Always use your own judgment and consider consulting with
+            career professionals for important decisions.
           </p>
         </div>
       )}

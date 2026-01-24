@@ -1,19 +1,57 @@
-import React, { useRef, useState, DragEvent } from 'react';
+/**
+ * @fileoverview Resume Input Component - PDF Upload and Text Paste
+ *
+ * A dual-mode input component for providing resume content:
+ * - Upload tab: Drag-and-drop or browse for PDF files
+ * - Paste tab: Direct text input via textarea
+ *
+ * Features:
+ * - Client-side validation (file type, size limits)
+ * - Visual feedback for drag-and-drop
+ * - Loading state while processing PDF
+ * - Error display for validation failures
+ * - Clear button to reset input
+ *
+ * @see useResumeInput hook for state management
+ */
 
+import { VALIDATION } from "@/constants/validation";
+import { DragEvent, useRef, useState } from "react";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TYPE DEFINITIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Input method selection - determines which UI to show */
+type InputMethod = "upload" | "paste";
+
+/** Props for the ResumeInput component */
 interface ResumeInputProps {
+  /** Current resume text content */
   text: string;
-  source: 'paste' | 'pdf';
+  /** Source of the resume (paste or pdf) */
+  source: "paste" | "pdf";
+  /** Original filename if PDF was uploaded */
   fileName: string | null;
+  /** Whether PDF is being processed */
   isLoading: boolean;
+  /** Error message from parent or API */
   error: string | null;
+  /** Callback when text changes (paste mode) */
   onTextChange: (text: string) => void;
+  /** Callback when file is selected/dropped */
   onFileUpload: (file: File) => void;
+  /** Callback to clear all input */
   onClear: () => void;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
+
 export const ResumeInput: React.FC<ResumeInputProps> = ({
   text,
-  source,
+  source: _source,
   fileName,
   isLoading,
   error,
@@ -23,6 +61,10 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [activeTab, setActiveTab] = useState<InputMethod>("upload");
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  // ─── Drag and Drop Handlers ─────────────────────────────────────────────────
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -37,88 +79,67 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
+    setLocalError(null);
 
     const file = e.dataTransfer.files[0];
     if (file) {
-      onFileUpload(file);
+      validateAndUpload(file);
     }
+  };
+
+  // ─── File Validation ────────────────────────────────────────────────────────
+
+  const validateAndUpload = (file: File) => {
+    if (file.type !== "application/pdf") {
+      setLocalError("Please upload a PDF file");
+      return;
+    }
+    if (file.size > VALIDATION.MAX_PDF_SIZE) {
+      setLocalError(
+        `PDF too large (max ${VALIDATION.MAX_PDF_SIZE / 1024 / 1024}MB)`,
+      );
+      return;
+    }
+    setLocalError(null);
+    onFileUpload(file);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      onFileUpload(file);
+      validateAndUpload(file);
     }
-    // Reset input so same file can be selected again
-    e.target.value = '';
+    e.target.value = "";
   };
 
   const handleBrowseClick = () => {
     fileInputRef.current?.click();
   };
 
+  const handleTabChange = (tab: InputMethod) => {
+    setActiveTab(tab);
+    setLocalError(null);
+    if (text || fileName) {
+      onClear();
+    }
+  };
+
+  const displayError = localError || error;
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-lg font-bold text-gray-900 dark:text-white">
           Your Resume
         </label>
-        {text && (
+        {(text || fileName) && (
           <button
             onClick={onClear}
-            className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors flex items-center gap-1"
           >
-            Clear
-          </button>
-        )}
-      </div>
-
-      {/* File upload zone */}
-      <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        className={`
-          relative border-2 border-dashed rounded-lg p-4 text-center transition-colors
-          ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
-          ${isLoading ? 'opacity-50 pointer-events-none' : ''}
-        `}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".pdf"
-          onChange={handleFileChange}
-          className="hidden"
-        />
-
-        {isLoading ? (
-          <div className="flex items-center justify-center gap-2 py-2">
             <svg
-              className="animate-spin h-5 w-5 text-blue-600"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-            <span className="text-sm text-gray-600">Extracting text from PDF...</span>
-          </div>
-        ) : fileName ? (
-          <div className="flex items-center justify-center gap-2 py-2">
-            <svg
-              className="w-5 h-5 text-green-600"
+              className="w-4 h-4"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -127,15 +148,28 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                d="M6 18L18 6M6 6l12 12"
               />
             </svg>
-            <span className="text-sm text-gray-700">{fileName}</span>
-          </div>
-        ) : (
-          <div className="py-2">
+            Remove Resume
+          </button>
+        )}
+      </div>
+
+      {/* Tabs */}
+      <div className="flex border-b border-gray-200 dark:border-gray-700">
+        <button
+          type="button"
+          onClick={() => handleTabChange("upload")}
+          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === "upload"
+              ? "border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400"
+              : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
+          }`}
+        >
+          <span className="flex items-center gap-2">
             <svg
-              className="mx-auto h-8 w-8 text-gray-400"
+              className="w-4 h-4"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -143,58 +177,204 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                strokeWidth={2}
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
               />
             </svg>
-            <p className="mt-2 text-sm text-gray-600">
-              Drop PDF here or{' '}
-              <button
-                type="button"
-                onClick={handleBrowseClick}
-                className="text-blue-600 hover:text-blue-700 font-medium"
+            Upload PDF
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => handleTabChange("paste")}
+          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === "paste"
+              ? "border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400"
+              : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            Paste Text
+          </span>
+        </button>
+      </div>
+
+      {/* Helper note */}
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        Choose one method.{" "}
+        {activeTab === "upload"
+          ? "Uploaded PDF will be parsed automatically."
+          : "Paste your resume text directly."}
+      </p>
+
+      {/* Upload Tab Content */}
+      {activeTab === "upload" && (
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`
+            relative border-2 border-dashed rounded-lg p-6 text-center transition-colors
+            ${isDragging ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"}
+            ${isLoading ? "opacity-50 pointer-events-none" : ""}
+            ${displayError ? "border-red-300 dark:border-red-500 bg-red-50 dark:bg-red-900/20" : ""}
+          `}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf"
+            onChange={handleFileChange}
+            className="hidden"
+            aria-label="Upload PDF resume"
+          />
+
+          {isLoading ? (
+            <div className="flex flex-col items-center gap-3 py-4">
+              <svg
+                className="animate-spin h-8 w-8 text-blue-600 dark:text-blue-400"
+                fill="none"
+                viewBox="0 0 24 24"
               >
-                browse
-              </button>
-            </p>
-            <p className="text-xs text-gray-500 mt-1">PDF up to 5MB</p>
-          </div>
-        )}
-      </div>
-
-      {/* Divider */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-200" />
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Extracting text from PDF...
+              </span>
+            </div>
+          ) : fileName ? (
+            <div className="flex flex-col items-center gap-3 py-4">
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-6 h-6 text-green-600 dark:text-green-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {fileName}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {text.length.toLocaleString()} characters extracted
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="py-4">
+              <svg
+                className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                Drag and drop your PDF here, or{" "}
+                <button
+                  type="button"
+                  onClick={handleBrowseClick}
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+                >
+                  browse files
+                </button>
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                PDF up to 5MB
+              </p>
+            </div>
+          )}
         </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="px-2 bg-white text-gray-500">or paste text</span>
-        </div>
-      </div>
+      )}
 
-      {/* Text input */}
-      <textarea
-        value={text}
-        onChange={(e) => onTextChange(e.target.value)}
-        placeholder="Paste your resume text here..."
-        rows={8}
-        className={`
-          w-full px-4 py-3 border rounded-lg text-sm
-          placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-          ${source === 'pdf' ? 'bg-gray-50 text-gray-600' : 'bg-white'}
-          ${error ? 'border-red-300' : 'border-gray-300'}
-        `}
-        readOnly={source === 'pdf'}
-      />
+      {/* Paste Tab Content */}
+      {activeTab === "paste" && (
+        <textarea
+          value={text}
+          onChange={(e) => onTextChange(e.target.value)}
+          placeholder="Paste your resume text here..."
+          rows={10}
+          className={`
+            w-full px-4 py-3 border rounded-lg text-sm
+            placeholder-gray-400 dark:placeholder-gray-500 
+            focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+            bg-white dark:bg-gray-900 text-gray-900 dark:text-white
+            ${displayError ? "border-red-300 dark:border-red-500 bg-red-50 dark:bg-red-900/20" : "border-gray-300 dark:border-gray-600"}
+          `}
+          aria-label="Resume text"
+        />
+      )}
+
+      {/* Error display */}
+      {displayError && (
+        <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          {displayError}
+        </p>
+      )}
 
       {/* Character count */}
-      <div className="flex justify-between text-xs text-gray-500">
-        <span>
-          {source === 'pdf' && 'Extracted from PDF • '}
+      {text && !displayError && (
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           {text.length.toLocaleString()} characters
-        </span>
-        {error && <span className="text-red-600">{error}</span>}
-      </div>
+          {text.length < VALIDATION.MIN_TEXT_LENGTH && (
+            <span className="text-amber-600 dark:text-amber-400 ml-2">
+              (minimum {VALIDATION.MIN_TEXT_LENGTH} required)
+            </span>
+          )}
+        </p>
+      )}
     </div>
   );
 };
