@@ -1,11 +1,5 @@
-/**
- * Re-export shared types for backend use
- * This avoids rootDir issues with TypeScript
- */
-
-// ============================================
-// INPUT TYPES
-// ============================================
+// Backend-local type definitions (mirrors shared/types.ts)
+// Avoids rootDir issues with TypeScript — backend can't import from ../shared directly
 
 export interface ResumeInput {
   text: string;
@@ -18,10 +12,6 @@ export interface JobDescription {
   title?: string;
   company?: string;
 }
-
-// ============================================
-// ANALYSIS RESULT TYPES
-// ============================================
 
 export interface InsightItem {
   headline: string;
@@ -36,10 +26,6 @@ export interface AnalysisResult {
   riskFlags: InsightItem[];
   improvements: InsightItem[];
 }
-
-// ============================================
-// API RESPONSE TYPES
-// ============================================
 
 export interface AnalyzeResponse {
   success: true;
@@ -58,20 +44,12 @@ export interface ApiErrorResponse {
 
 export type ApiResponse = AnalyzeResponse | ApiErrorResponse;
 
-// ============================================
-// ERROR CODES
-// ============================================
-
 export type ErrorCode =
   | "VALIDATION_ERROR"
   | "PDF_PARSE_ERROR"
   | "AI_SERVICE_ERROR"
   | "RATE_LIMIT_ERROR"
   | "INTERNAL_ERROR";
-
-// ============================================
-// VALIDATION CONSTANTS
-// ============================================
 
 export const VALIDATION = {
   MAX_RESUME_LENGTH: 50_000,

@@ -1,18 +1,3 @@
-/**
- * @fileoverview Analysis Results Container
- *
- * Main display component for showing the complete analysis output.
- * Orchestrates the layout of:
- * - Score gauge (visual match percentage)
- * - Summary accordion
- * - Insight sections (strengths, gaps, improvements, risks)
- * - Copy and download actions
- *
- * Layout:
- * - Desktop: Score gauge left, header/summary right
- * - Mobile: Score gauge centered above header
- */
-
 import type { AnalysisResult } from "@shared/types";
 import React from "react";
 import { Accordion, Toast, useToast } from "../ui";
@@ -22,21 +7,10 @@ import { DownloadPDF } from "./DownloadPDF";
 import { InsightSection } from "./InsightSection";
 import { ScoreGauge } from "./ScoreGauge";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TYPE DEFINITIONS
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Props for the AnalysisResults component */
 interface AnalysisResultsProps {
-  /** The complete analysis result from the API */
   result: AnalysisResult;
-  /** Optional processing time for performance display */
   processingTimeMs?: number | null;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// COMPONENT
-// ─────────────────────────────────────────────────────────────────────────────
 
 export const AnalysisResults: React.FC<AnalysisResultsProps> = ({
   result,
@@ -50,15 +24,12 @@ export const AnalysisResults: React.FC<AnalysisResultsProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Header with score */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex flex-col lg:flex-row lg:items-start gap-6">
-          {/* Score gauge */}
           <div className="flex justify-center lg:justify-start">
             <ScoreGauge score={result.matchScore} />
           </div>
 
-          {/* Header and copy button */}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-4">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -78,7 +49,6 @@ export const AnalysisResults: React.FC<AnalysisResultsProps> = ({
           </div>
         </div>
 
-        {/* Summary in collapsible accordion */}
         <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
           <Accordion
             title="Summary"
@@ -107,7 +77,6 @@ export const AnalysisResults: React.FC<AnalysisResultsProps> = ({
         </div>
       </div>
 
-      {/* Insight sections - reordered: Strengths > Gaps > Improvements > Risks */}
       <div className="flex flex-col gap-6">
         <InsightSection
           type="strength"
@@ -142,10 +111,8 @@ export const AnalysisResults: React.FC<AnalysisResultsProps> = ({
         />
       </div>
 
-      {/* Disclaimer */}
       <Disclaimer />
 
-      {/* Toast notifications */}
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}

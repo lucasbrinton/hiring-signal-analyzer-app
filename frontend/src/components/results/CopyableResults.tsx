@@ -6,9 +6,6 @@ interface CopyableResultsProps {
   onCopy?: () => void;
 }
 
-/**
- * Format results as plain text for copying
- */
 function formatResultsAsText(result: AnalysisResult): string {
   let text = `HIRING SIGNAL ANALYSIS\n`;
   text += `${"=".repeat(50)}\n\n`;

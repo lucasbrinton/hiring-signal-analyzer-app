@@ -1,38 +1,10 @@
-/**
- * @fileoverview Score Gauge Component - Circular Match Percentage Display
- *
- * Renders an animated circular gauge showing the match score (0-100).
- * Includes:
- * - Color-coded score visualization (green to red)
- * - Hover/click tooltip with scoring band explanations
- * - Accessible labels for screen readers
- * - Responsive size variants (sm, md, lg)
- *
- * Scoring Bands:
- * - 90-100: Excellent (green) - High interview likelihood
- * - 75-89: Strong (lime) - Likely passes initial screen
- * - 60-74: Moderate (yellow) - Needs tailoring
- * - 40-59: Weak (orange) - Significant gaps
- * - 0-39: Poor (red) - Major misalignment
- *
- * @see shared/types.ts for scoring band documentation
- */
-
 import React, { useState } from "react";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TYPE DEFINITIONS
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Props for the ScoreGauge component */
 interface ScoreGaugeProps {
-  /** Match score from 0-100 */
   score: number;
-  /** Display size variant */
   size?: "sm" | "md" | "lg";
 }
 
-/** Score band configuration for color and tooltip */
 interface ScoreBand {
   min: number;
   max: number;
@@ -41,11 +13,6 @@ interface ScoreBand {
   color: string;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CONSTANTS
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Score bands with colors and descriptions for tooltip */
 const scoreBands: ScoreBand[] = [
   {
     min: 90,
@@ -84,25 +51,11 @@ const scoreBands: ScoreBand[] = [
   },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPER FUNCTIONS
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Get score color based on value.
- * @param score - Match score 0-100
- * @returns Hex color code for the score band
- */
 function getScoreColor(score: number): string {
   const band = scoreBands.find((b) => score >= b.min && score <= b.max);
   return band?.color || "#ef4444";
 }
 
-/**
- * Get human-readable score label.
- * @param score - Match score 0-100
- * @returns Label like "Strong Match"
- */
 function getScoreLabel(score: number): string {
   if (score >= 90) return "Excellent Match";
   if (score >= 75) return "Strong Match";
@@ -110,10 +63,6 @@ function getScoreLabel(score: number): string {
   if (score >= 40) return "Weak Match";
   return "Poor Match";
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// COMPONENT
-// ─────────────────────────────────────────────────────────────────────────────
 
 export const ScoreGauge: React.FC<ScoreGaugeProps> = ({
   score,
@@ -123,32 +72,28 @@ export const ScoreGauge: React.FC<ScoreGaugeProps> = ({
   const color = getScoreColor(score);
   const label = getScoreLabel(score);
 
-  // Size configurations
   const sizes = {
     sm: { container: "w-24 h-24", text: "text-2xl", label: "text-xs" },
     md: { container: "w-32 h-32", text: "text-3xl", label: "text-sm" },
     lg: { container: "w-44 h-44", text: "text-5xl", label: "text-base" },
   };
 
-  const config = sizes[size];
+  const sizeConfig = sizes[size];
 
-  // SVG arc calculation for circular progress
   const radius = 45;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (score / 100) * circumference;
 
   return (
     <div className="flex flex-col items-center relative">
-      {/* Clickable gauge */}
       <button
         type="button"
-        className={`relative ${config.container} cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full`}
+        className={`relative ${sizeConfig.container} cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full`}
         onClick={() => setShowTooltip(!showTooltip)}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
         aria-label={`Match score: ${score} out of 100. ${label}. Click for details.`}
       >
-        {/* Background circle */}
         <svg
           className="w-full h-full transform -rotate-90"
           viewBox="0 0 100 100"
@@ -161,7 +106,6 @@ export const ScoreGauge: React.FC<ScoreGaugeProps> = ({
             stroke="#e5e7eb"
             strokeWidth="8"
           />
-          {/* Progress arc */}
           <circle
             cx="50"
             cy="50"
@@ -178,22 +122,19 @@ export const ScoreGauge: React.FC<ScoreGaugeProps> = ({
           />
         </svg>
 
-        {/* Score text in center */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className={`${config.text} font-bold`} style={{ color }}>
+          <span className={`${sizeConfig.text} font-bold`} style={{ color }}>
             {score}
           </span>
           <span className="text-xs text-gray-500 -mt-1">/ 100</span>
         </div>
       </button>
 
-      {/* Label below */}
-      <span className={`mt-3 font-bold ${config.label}`} style={{ color }}>
+      <span className={`mt-3 font-bold ${sizeConfig.label}`} style={{ color }}>
         {label}
       </span>
       <span className="text-xs text-gray-500 mt-1">Click for score guide</span>
 
-      {/* Tooltip/Popover */}
       {showTooltip && (
         <div className="absolute top-full mt-4 left-1/2 -translate-x-1/2 z-50 w-80">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-4">
@@ -250,7 +191,6 @@ export const ScoreGauge: React.FC<ScoreGaugeProps> = ({
                 );
               })}
             </div>
-            {/* Arrow */}
             <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white dark:bg-gray-800 border-l border-t border-gray-200 dark:border-gray-700 transform rotate-45" />
           </div>
         </div>

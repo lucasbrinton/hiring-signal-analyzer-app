@@ -2,28 +2,20 @@ import pdf from 'pdf-parse';
 import { Errors } from '../utils/errors.js';
 import { config } from '../config.js';
 
-/**
- * Extract text content from a PDF buffer
- */
 export async function parsePdf(buffer: Buffer): Promise<string> {
-  // Validate file size
   if (buffer.length > config.limits.maxPdfSizeBytes) {
     throw Errors.validation(
       `PDF file too large. Maximum size is ${config.limits.maxPdfSizeBytes / 1024 / 1024}MB`
     );
   }
 
-  // Check PDF magic bytes
   const pdfHeader = buffer.slice(0, 5).toString('ascii');
   if (pdfHeader !== '%PDF-') {
     throw Errors.validation('Invalid PDF file format');
   }
 
   try {
-    const data = await pdf(buffer, {
-      // Limit pages to prevent abuse
-      max: 20,
-    });
+    const data = await pdf(buffer, { max: 20 });
 
     const text = data.text.trim();
 
@@ -33,10 +25,9 @@ export async function parsePdf(buffer: Buffer): Promise<string> {
       );
     }
 
-    // Clean up common PDF extraction artifacts
     const cleanedText = text
-      .replace(/\s+/g, ' ') // Normalize whitespace
-      .replace(/([a-z])([A-Z])/g, '$1 $2') // Add space between camelCase (common PDF issue)
+      .replace(/\s+/g, ' ')
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
       .trim();
 
     return cleanedText;

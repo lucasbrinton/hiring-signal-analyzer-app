@@ -1,57 +1,20 @@
-/**
- * @fileoverview Resume Input Component - PDF Upload and Text Paste
- *
- * A dual-mode input component for providing resume content:
- * - Upload tab: Drag-and-drop or browse for PDF files
- * - Paste tab: Direct text input via textarea
- *
- * Features:
- * - Client-side validation (file type, size limits)
- * - Visual feedback for drag-and-drop
- * - Loading state while processing PDF
- * - Error display for validation failures
- * - Clear button to reset input
- *
- * @see useResumeInput hook for state management
- */
-
-import { VALIDATION } from "@/constants/validation";
+import { VALIDATION } from "@shared/types";
 import { DragEvent, useRef, useState } from "react";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TYPE DEFINITIONS
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Input method selection - determines which UI to show */
 type InputMethod = "upload" | "paste";
 
-/** Props for the ResumeInput component */
 interface ResumeInputProps {
-  /** Current resume text content */
   text: string;
-  /** Source of the resume (paste or pdf) */
-  source: "paste" | "pdf";
-  /** Original filename if PDF was uploaded */
   fileName: string | null;
-  /** Whether PDF is being processed */
   isLoading: boolean;
-  /** Error message from parent or API */
   error: string | null;
-  /** Callback when text changes (paste mode) */
   onTextChange: (text: string) => void;
-  /** Callback when file is selected/dropped */
   onFileUpload: (file: File) => void;
-  /** Callback to clear all input */
   onClear: () => void;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// COMPONENT
-// ─────────────────────────────────────────────────────────────────────────────
-
 export const ResumeInput: React.FC<ResumeInputProps> = ({
   text,
-  source: _source,
   fileName,
   isLoading,
   error,
@@ -63,8 +26,6 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [activeTab, setActiveTab] = useState<InputMethod>("upload");
   const [localError, setLocalError] = useState<string | null>(null);
-
-  // ─── Drag and Drop Handlers ─────────────────────────────────────────────────
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -86,8 +47,6 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({
       validateAndUpload(file);
     }
   };
-
-  // ─── File Validation ────────────────────────────────────────────────────────
 
   const validateAndUpload = (file: File) => {
     if (file.type !== "application/pdf") {
@@ -128,7 +87,6 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <label className="block text-lg font-bold text-gray-900 dark:text-white">
           Your Resume
@@ -156,7 +114,6 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({
         )}
       </div>
 
-      {/* Tabs */}
       <div className="flex border-b border-gray-200 dark:border-gray-700">
         <button
           type="button"
@@ -212,7 +169,6 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({
         </button>
       </div>
 
-      {/* Helper note */}
       <p className="text-xs text-gray-500 dark:text-gray-400">
         Choose one method.{" "}
         {activeTab === "upload"
@@ -220,7 +176,6 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({
           : "Paste your resume text directly."}
       </p>
 
-      {/* Upload Tab Content */}
       {activeTab === "upload" && (
         <div
           onDragOver={handleDragOver}
@@ -326,7 +281,6 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({
         </div>
       )}
 
-      {/* Paste Tab Content */}
       {activeTab === "paste" && (
         <textarea
           value={text}
@@ -335,7 +289,7 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({
           rows={10}
           className={`
             w-full px-4 py-3 border rounded-lg text-sm
-            placeholder-gray-400 dark:placeholder-gray-500 
+            placeholder-gray-400 dark:placeholder-gray-500
             focus:ring-2 focus:ring-blue-500 focus:border-blue-500
             bg-white dark:bg-gray-900 text-gray-900 dark:text-white
             ${displayError ? "border-red-300 dark:border-red-500 bg-red-50 dark:bg-red-900/20" : "border-gray-300 dark:border-gray-600"}
@@ -344,7 +298,6 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({
         />
       )}
 
-      {/* Error display */}
       {displayError && (
         <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
           <svg
@@ -364,7 +317,6 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({
         </p>
       )}
 
-      {/* Character count */}
       {text && !displayError && (
         <p className="text-xs text-gray-500 dark:text-gray-400">
           {text.length.toLocaleString()} characters

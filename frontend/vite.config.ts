@@ -10,7 +10,6 @@ export default defineConfig({
       "@shared": path.resolve(__dirname, "../shared"),
     },
   },
-  // Ensure shared TypeScript files are processed
   optimizeDeps: {
     include: [],
     exclude: [],
@@ -23,15 +22,18 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
-    // Enable watching the shared folder
     watch: {
       ignored: ["!**/shared/**"],
     },
   },
-  // Include shared folder in build
   build: {
     commonjsOptions: {
       include: [/shared/, /node_modules/],
     },
+  },
+  test: {
+    environment: "jsdom",
+    globals: true,
+    setupFiles: ["./src/test/setup.ts"],
   },
 });

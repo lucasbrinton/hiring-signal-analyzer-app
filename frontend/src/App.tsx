@@ -1,18 +1,3 @@
-/**
- * @fileoverview Main Application Component - Hiring Signal Analyzer
- *
- * This is the root component that orchestrates the entire application flow:
- * 1. Input Collection: Resume (paste/PDF) + Job Description
- * 2. AI Analysis: Sends data to Claude API via backend
- * 3. Results Display: Structured insights with match score
- *
- * Architecture Decision: Uses a state machine pattern (idle → analyzing → success/error)
- * to manage UI states cleanly without complex conditional logic.
- *
- * @author Hiring Signal Analyzer Team
- * @version 1.0.0
- */
-
 import { useState } from "react";
 
 import {
@@ -25,43 +10,13 @@ import {
   ResumeInput,
 } from "@/components";
 import { Modal } from "@/components/ui";
-import { VALIDATION } from "@/constants/validation";
+import { VALIDATION } from "@shared/types";
 import { useAnalysis, useResumeInput } from "@/hooks";
 
-/**
- * Root application component implementing the resume-job matching workflow.
- *
- * State Management Strategy:
- * - `useResumeInput`: Encapsulates resume state (text, file, loading, errors)
- * - `useAnalysis`: Manages API call lifecycle and results caching
- * - Local state: Job description text and modal visibility
- *
- * Rendering Strategy:
- * - Early returns for loading/success states (cleaner than nested conditionals)
- * - Form validation computed from hook state (derived state pattern)
- *
- * @returns The main application UI based on current analysis status
- */
 function App(): JSX.Element {
-  // ─────────────────────────────────────────────────────────────────────────────
-  // STATE MANAGEMENT
-  // ─────────────────────────────────────────────────────────────────────────────
-
-  /** Resume input state - handles both paste and PDF upload workflows */
   const resume = useResumeInput();
-
-  /** Job description text - simple controlled input */
   const [jobDescriptionText, setJobDescriptionText] = useState("");
-
-  /** Error modal visibility - shown on analysis failure */
-  const [showErrorModal, setShowErrorModal] = useState(false);
-
-  /** Analysis state machine - manages API call lifecycle */
   const analysis = useAnalysis();
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // DERIVED STATE (Computed from hook values)
-  // ─────────────────────────────────────────────────────────────────────────────
 
   const isResumeValid = resume.text.length >= VALIDATION.MIN_TEXT_LENGTH;
   const isJobDescriptionValid =
@@ -69,14 +24,6 @@ function App(): JSX.Element {
   const canAnalyze =
     isResumeValid && isJobDescriptionValid && !resume.isLoading;
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // EVENT HANDLERS
-  // ─────────────────────────────────────────────────────────────────────────────
-
-  /**
-   * Initiates the resume analysis workflow.
-   * Determines whether to use JSON or multipart/form-data based on resume source.
-   */
   const handleAnalyze = async (): Promise<void> => {
     const resumeInput = resume.getResumeInput();
     if (!resumeInput) return;
@@ -84,40 +31,26 @@ function App(): JSX.Element {
     const jobDescription = { text: jobDescriptionText };
     const file = resume.source === "pdf" ? resume.getFile() : undefined;
 
-    try {
-      await analysis.analyze(resumeInput, jobDescription, file ?? undefined);
-    } catch {
-      setShowErrorModal(true);
-    }
+    await analysis.analyze(resumeInput, jobDescription, file ?? undefined);
   };
 
-  /** Cancels an in-progress analysis and returns to idle state */
   const handleCancelAnalysis = (): void => {
     analysis.reset();
   };
 
-  /** Resets all form state to start a new analysis */
   const handleReset = (): void => {
     resume.clear();
     setJobDescriptionText("");
     analysis.reset();
   };
 
-  /** Closes the error modal and resets analysis state */
   const handleCloseErrorModal = (): void => {
-    setShowErrorModal(false);
     analysis.reset();
   };
 
-  // Determine if error modal should be visible
   const shouldShowErrorModal =
-    showErrorModal || (analysis.status === "error" && analysis.error);
+    analysis.status === "error" && analysis.error;
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // RENDER LOGIC (State machine pattern with early returns)
-  // ─────────────────────────────────────────────────────────────────────────────
-
-  // Loading State: Analysis in progress
   if (analysis.status === "analyzing") {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -129,7 +62,6 @@ function App(): JSX.Element {
     );
   }
 
-  // Success State: Display analysis results
   if (analysis.status === "success" && analysis.result) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -144,14 +76,12 @@ function App(): JSX.Element {
     );
   }
 
-  // Idle/Error State: Display input form
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
 
       <main className="max-w-3xl mx-auto px-4 py-8">
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sm:p-8">
-          {/* Intro text */}
           <div className="text-center mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
               How well does your resume match?
@@ -162,11 +92,9 @@ function App(): JSX.Element {
             </p>
           </div>
 
-          {/* Form */}
           <div className="space-y-8">
             <ResumeInput
               text={resume.text}
-              source={resume.source}
               fileName={resume.fileName}
               isLoading={resume.isLoading}
               error={resume.error}
@@ -180,17 +108,14 @@ function App(): JSX.Element {
               onChange={setJobDescriptionText}
             />
 
-            {/* Disclaimer banner */}
             <DisclaimerBanner />
 
-            {/* Analyze button */}
             <AnalyzeButton
               onClick={handleAnalyze}
               isLoading={false}
               isDisabled={!canAnalyze}
             />
 
-            {/* Validation hints */}
             {(!isResumeValid || !isJobDescriptionValid) && (
               <p className="text-center text-sm text-gray-500 dark:text-gray-400">
                 {!isResumeValid && !isJobDescriptionValid
@@ -203,14 +128,12 @@ function App(): JSX.Element {
           </div>
         </div>
 
-        {/* Disclaimer */}
         <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
           This tool provides informational insights only. Results are
           AI-generated and should not be considered professional career advice.
         </p>
       </main>
 
-      {/* Error Modal */}
       <Modal
         isOpen={!!shouldShowErrorModal}
         onClose={handleCloseErrorModal}
@@ -225,7 +148,6 @@ function App(): JSX.Element {
             </button>
             <button
               onClick={() => {
-                setShowErrorModal(false);
                 analysis.reset();
                 handleAnalyze();
               }}

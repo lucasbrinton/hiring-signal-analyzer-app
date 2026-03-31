@@ -10,9 +10,6 @@ interface State {
   error: Error | null;
 }
 
-/**
- * Error Boundary to catch React errors and prevent white screens
- */
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);

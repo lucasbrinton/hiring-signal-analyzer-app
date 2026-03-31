@@ -1,31 +1,9 @@
-/**
- * @fileoverview Job Description Input Component
- *
- * Simple textarea component for entering job description text.
- * Displays character count for user feedback.
- *
- * Design Decision:
- * Kept intentionally simple (no PDF upload) because job descriptions
- * are typically copy-pasted from job postings, not attached as documents.
- */
-
 import React from "react";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TYPE DEFINITIONS
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Props for the JobDescriptionInput component */
 interface JobDescriptionInputProps {
-  /** Current job description text */
   value: string;
-  /** Callback when text changes */
   onChange: (value: string) => void;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// COMPONENT
-// ─────────────────────────────────────────────────────────────────────────────
 
 export const JobDescriptionInput: React.FC<JobDescriptionInputProps> = ({
   value,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 interface ToastProps {
   message: string;
@@ -14,15 +14,21 @@ export const Toast: React.FC<ToastProps> = ({
   onClose,
 }) => {
   const [isVisible, setIsVisible] = useState(true);
+  const onCloseRef = useRef(onClose);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(false);
-      setTimeout(onClose, 200);
-    }, duration);
+    onCloseRef.current = onClose;
+  });
 
+  const dismiss = useCallback(() => {
+    setIsVisible(false);
+    setTimeout(() => onCloseRef.current(), 200);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(dismiss, duration);
     return () => clearTimeout(timer);
-  }, [duration, onClose]);
+  }, [duration, dismiss]);
 
   const colors = {
     success: "bg-green-600",
@@ -90,10 +96,7 @@ export const Toast: React.FC<ToastProps> = ({
         {icons[type]}
         <span className="text-sm font-medium">{message}</span>
         <button
-          onClick={() => {
-            setIsVisible(false);
-            setTimeout(onClose, 200);
-          }}
+          onClick={dismiss}
           className="ml-2 hover:opacity-75"
         >
           <svg
@@ -122,16 +125,16 @@ export function useToast() {
     type: "success" | "error" | "info";
   } | null>(null);
 
-  const showToast = (
-    message: string,
-    type: "success" | "error" | "info" = "success",
-  ) => {
-    setToast({ message, type });
-  };
+  const showToast = useCallback(
+    (message: string, type: "success" | "error" | "info" = "success") => {
+      setToast({ message, type });
+    },
+    [],
+  );
 
-  const hideToast = () => {
+  const hideToast = useCallback(() => {
     setToast(null);
-  };
+  }, []);
 
   return { toast, showToast, hideToast };
 }

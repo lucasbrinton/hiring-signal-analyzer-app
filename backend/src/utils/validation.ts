@@ -1,10 +1,6 @@
 import { z } from 'zod';
 import { config } from '../config.js';
 
-/**
- * Zod schemas for request validation
- */
-
 export const resumeInputSchema = z.object({
   text: z
     .string()

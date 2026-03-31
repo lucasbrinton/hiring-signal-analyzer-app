@@ -1,11 +1,7 @@
 import type { ApiErrorResponse, ErrorCode } from "../types/shared.js";
 
-// Re-export for convenience
 export type { ApiErrorResponse, ErrorCode };
 
-/**
- * Custom API error class with structured error codes
- */
 export class ApiError extends Error {
   constructor(
     public code: ErrorCode,
@@ -29,9 +25,6 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Factory functions for common errors
- */
 export const Errors = {
   validation: (message: string, details?: string) =>
     new ApiError("VALIDATION_ERROR", message, 400, details),
